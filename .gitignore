@@ -1,0 +1,32 @@
+# 🔐 Arquivos de ambiente
+.env
+
+# ⚙️ IDEs e configurações locais
+.idea/
+.vscode/
+*.iml
+
+# 🧱 Build Java (Spring Boot)
+/backend/target/
+*.log
+*.class
+
+# 📦 Node (React)
+node_modules/
+build/
+dist/
+
+# 🚢 Docker
+*.env
+docker-compose.override.yml
+
+# 🧪 Testes e caches
+coverage/
+jest.config.js
+.nyc_output/
+.cache/
+*.test.js
+
+# 🧼 Outros
+.DS_Store
+Thumbs.db
