@@ -30,12 +30,15 @@ public class MoviesService {
             return ResponseEntity.badRequest().body(jsonError);
         }
 
+        if (page < 1) {
+            page = 1;
+        }
+
         String url = String.format("http://www.omdbapi.com/?s=%s&apikey=%s&page=%d", title.trim(), apiKey, page);
 
         try {
             return restTemplate.getForEntity(url, String.class);
         } catch (HttpClientErrorException e) {
-            // Retorna o erro da OMDb para o frontend tratar
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
     }
@@ -45,7 +48,6 @@ public class MoviesService {
         try {
             return restTemplate.getForEntity(url, String.class);
         } catch (HttpClientErrorException e) {
-            // Retorna o erro da OMDb para o frontend tratar
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
     }
@@ -55,7 +57,6 @@ public class MoviesService {
         try {
             return restTemplate.getForEntity(url, String.class);
         } catch (HttpClientErrorException e) {
-            // Retorna o erro da OMDb para o frontend tratar
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
     }
