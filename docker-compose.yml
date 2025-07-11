@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: privacy-tools-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - OMDB_API_KEY=${OMDB_API_KEY}
+      - SPRING_PROFILES_ACTIVE=dev
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: privacy-tools-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
