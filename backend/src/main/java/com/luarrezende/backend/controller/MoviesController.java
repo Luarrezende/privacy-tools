@@ -25,4 +25,14 @@ public class MoviesController {
     public ResponseEntity<String> searchMovieJson(@RequestParam String title, @RequestParam(defaultValue = "1") int page) {
         return moviesService.searchMovieJson(title, page);
     }
+
+    @GetMapping("/search-by-id")
+    public ResponseEntity<String> searchMovieById(@RequestParam String id) {
+        return moviesService.searchMovieById(id);
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<String> getMovieDetails(@RequestParam String id, @RequestParam(defaultValue = "short") String plot) {
+        return moviesService.getMovieDetails(id, plot);
+    }
 }

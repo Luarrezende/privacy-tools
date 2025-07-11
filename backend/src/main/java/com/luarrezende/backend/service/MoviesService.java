@@ -20,19 +20,12 @@ public class MoviesService {
     }
 
     public ResponseEntity<String> searchMovie(String title) {
-        // System.out.println("Buscando filme antes: " + title);
-        // System.out.println("API KEY carregada antes: " + apiKey);
-        // System.out.println("URL da requisição antes: " + String.format("http://www.omdbapi.com/?t=%s&apikey=%s", title, apiKey));
         String url = String.format("http://www.omdbapi.com/?t=%s&apikey=%s", title, apiKey);
-        // System.out.println("Buscando filme depois: " + title);
-        // System.out.println("URL da requisição depois: " + url);
-        // System.out.println("API KEY carregada depois: " + apiKey);
         return restTemplate.getForEntity(url, String.class);
     }
 
     public ResponseEntity<String> searchMovieJson(String title, int page) {
         if (title == null || title.trim().length() < 3) {
-            // Retorna erro 400 com mensagem JSON personalizada
             String jsonError = "{\"Response\":\"False\", \"Error\":\"Termo de busca muito genérico. Digite pelo menos 3 caracteres.\"}";
             return ResponseEntity.badRequest().body(jsonError);
         }
@@ -46,4 +39,25 @@ public class MoviesService {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
     }
+
+    public ResponseEntity<String> searchMovieById(String id) {
+        String url = String.format("http://www.omdbapi.com/?i=%s&apikey=%s", id, apiKey);
+        try {
+            return restTemplate.getForEntity(url, String.class);
+        } catch (HttpClientErrorException e) {
+            // Retorna o erro da OMDb para o frontend tratar
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
+    }
+
+    public ResponseEntity<String> getMovieDetails(String id, String plot) {
+        String url = String.format("http://www.omdbapi.com/?i=%s&apikey=%s&plot=%s", id, apiKey, plot);
+        try {
+            return restTemplate.getForEntity(url, String.class);
+        } catch (HttpClientErrorException e) {
+            // Retorna o erro da OMDb para o frontend tratar
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
+    }
+        
 }
