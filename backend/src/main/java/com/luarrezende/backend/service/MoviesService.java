@@ -3,6 +3,9 @@ package com.luarrezende.backend.service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import com.luarrezende.backend.dto.MovieDetail;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -43,22 +46,14 @@ public class MoviesService {
         }
     }
 
-    public ResponseEntity<String> searchMovieById(String id) {
-        String url = String.format("http://www.omdbapi.com/?i=%s&apikey=%s", id, apiKey);
-        try {
-            return restTemplate.getForEntity(url, String.class);
-        } catch (HttpClientErrorException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
-        }
+    public ResponseEntity<?> getMovieDetails(String id, String plot) {
+    String url = String.format("http://www.omdbapi.com/?i=%s&apikey=%s&plot=%s", id, apiKey, plot);
+    try {
+        MovieDetail response = restTemplate.getForObject(url, MovieDetail.class);
+        return ResponseEntity.ok(response);
+    } catch (HttpClientErrorException e) {
+        return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
     }
-
-    public ResponseEntity<String> getMovieDetails(String id, String plot) {
-        String url = String.format("http://www.omdbapi.com/?i=%s&apikey=%s&plot=%s", id, apiKey, plot);
-        try {
-            return restTemplate.getForEntity(url, String.class);
-        } catch (HttpClientErrorException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
-        }
-    }
+}
         
 }
