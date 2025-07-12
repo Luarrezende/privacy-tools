@@ -1,11 +1,12 @@
 package com.luarrezende.backend.controller;
 
+import com.luarrezende.backend.service.MoviesService;
+
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
-import com.luarrezende.backend.service.MoviesService;
 
 @RestController
 @RequestMapping("/api/movies")
@@ -17,13 +18,13 @@ public class MoviesController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<String> searchMovie(@RequestParam String title) {
+    public ResponseEntity<?> searchMovie(@RequestParam String title) {
         return moviesService.searchMovie(title);
     }
 
-    @GetMapping("/search-json")
-    public ResponseEntity<String> searchMovieJson(@RequestParam String title, @RequestParam(defaultValue = "1") int page) {
-        return moviesService.searchMovieJson(title, page);
+    @GetMapping("/searchAll")
+    public ResponseEntity<?> searchAllMovies(@RequestParam String title, @RequestParam(defaultValue = "1") int page) {
+        return moviesService.searchAllMovies(title, page);
     }
 
     @GetMapping("/details")

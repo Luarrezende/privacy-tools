@@ -1,11 +1,11 @@
 package com.luarrezende.backend.service;
 
+import com.luarrezende.backend.dto.MovieDetailDto;
+import com.luarrezende.backend.dto.SearchAllDto;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
-import com.luarrezende.backend.dto.MovieDetail;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -22,12 +22,23 @@ public class MoviesService {
         this.restTemplate = restTemplate;
     }
 
-    public ResponseEntity<String> searchMovie(String title) {
-        String url = String.format("http://www.omdbapi.com/?t=%s&apikey=%s", title, apiKey);
-        return restTemplate.getForEntity(url, String.class);
+    public ResponseEntity<?> searchMovie(String title) {
+        if (title == null || title.trim().length() < 3) {
+            String jsonError = "{\"Response\":\"False\", \"Error\":\"Termo de busca muito genérico. Digite pelo menos 3 caracteres.\"}";
+            return ResponseEntity.badRequest().body(jsonError);
+        }
+
+        String url = String.format("http://www.omdbapi.com/?t=%s&apikey=%s", title.trim(), apiKey);
+
+        try {
+            MovieDetailDto response = restTemplate.getForObject(url, MovieDetailDto.class);
+            return ResponseEntity.ok(response);
+        } catch (HttpClientErrorException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
     }
 
-    public ResponseEntity<String> searchMovieJson(String title, int page) {
+    public ResponseEntity<?> searchAllMovies(String title, int page) {
         if (title == null || title.trim().length() < 3) {
             String jsonError = "{\"Response\":\"False\", \"Error\":\"Termo de busca muito genérico. Digite pelo menos 3 caracteres.\"}";
             return ResponseEntity.badRequest().body(jsonError);
@@ -40,7 +51,8 @@ public class MoviesService {
         String url = String.format("http://www.omdbapi.com/?s=%s&apikey=%s&page=%d", title.trim(), apiKey, page);
 
         try {
-            return restTemplate.getForEntity(url, String.class);
+            SearchAllDto response = restTemplate.getForObject(url, SearchAllDto.class);
+            return ResponseEntity.ok(response); 
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
@@ -49,7 +61,7 @@ public class MoviesService {
     public ResponseEntity<?> getMovieDetails(String id, String plot) {
     String url = String.format("http://www.omdbapi.com/?i=%s&apikey=%s&plot=%s", id, apiKey, plot);
     try {
-        MovieDetail response = restTemplate.getForObject(url, MovieDetail.class);
+        MovieDetailDto response = restTemplate.getForObject(url, MovieDetailDto.class);
         return ResponseEntity.ok(response);
     } catch (HttpClientErrorException e) {
         return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
