@@ -1,6 +1,8 @@
 package com.luarrezende.backend.controller;
 
 import com.luarrezende.backend.service.MoviesService;
+import com.luarrezende.backend.dto.MovieDetailsResponse;
+import com.luarrezende.backend.dto.MovieSearchResponse;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 @RestController
 @RequestMapping("/api/movies")
 public class MoviesController {
+    
     private final MoviesService moviesService;
 
     public MoviesController(MoviesService moviesService) {
@@ -18,17 +21,21 @@ public class MoviesController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchMovie(@RequestParam String title) {
+    public ResponseEntity<MovieDetailsResponse> searchMovie(@RequestParam String title) {
         return moviesService.searchMovie(title);
     }
 
-    @GetMapping("/searchAll")
-    public ResponseEntity<?> searchAllMovies(@RequestParam String title, @RequestParam(defaultValue = "1") int page) {
-        return moviesService.searchAllMovies(title, page);
+    @GetMapping("/searchall")
+    public ResponseEntity<MovieSearchResponse> searchAllMovies(
+            @RequestParam String title, 
+            @RequestParam(defaultValue = "1") int page) {
+        return (ResponseEntity<MovieSearchResponse>) moviesService.searchAllMovies(title, page);
     }
 
     @GetMapping("/details")
-    public ResponseEntity<?> getMovieDetails(@RequestParam String id, @RequestParam(defaultValue = "short") String plot) {
-        return moviesService.getMovieDetails(id, plot);
+    public ResponseEntity<MovieDetailsResponse> getMovieDetails(
+            @RequestParam String id, 
+            @RequestParam(defaultValue = "short") String plot) {
+        return (ResponseEntity<MovieDetailsResponse>) moviesService.getMovieDetails(id, plot);
     }
 }
