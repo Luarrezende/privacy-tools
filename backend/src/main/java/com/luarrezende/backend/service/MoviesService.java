@@ -1,11 +1,12 @@
 package com.luarrezende.backend.service;
 
-import com.luarrezende.backend.dto.MovieDetailDto;
-import com.luarrezende.backend.dto.SearchAllDto;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import com.luarrezende.backend.clientdto.MovieDetailDto;
+import com.luarrezende.backend.clientdto.SearchAllDto;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;

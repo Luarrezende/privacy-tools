@@ -1,4 +1,4 @@
-package com.luarrezende.backend.dto;
+package com.luarrezende.backend.clientdto;
 
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonProperty;
