@@ -30,6 +30,7 @@ public class CustomCacheResolver implements CacheResolver {
         logger.info("[CACHE RESOLVER] Resolvendo caches para operacao: {} em caches: {}", 
                     operation.getClass().getSimpleName(), cacheNames);
         
+        // Para operações Cacheable, verificar se já existe no cache
         if (operation instanceof CacheableOperation) {
             for (String cacheName : cacheNames) {
                 Cache cache = cacheManager.getCache(cacheName);
