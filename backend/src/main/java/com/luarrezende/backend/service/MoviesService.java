@@ -6,19 +6,26 @@ import com.luarrezende.backend.dto.MovieSummary;
 import com.luarrezende.backend.clientdto.MovieDetailDto;
 import com.luarrezende.backend.clientdto.SearchAllDto;
 import com.luarrezende.backend.clientdto.SearchDto;
+
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@EnableCaching
 public class MoviesService {
+    private static final Logger logger = LoggerFactory.getLogger(MoviesService.class);
     private static final int itensPerPage = 10;
     private static final int minSearchLen = 3;
     private final RestTemplate restTemplate;
@@ -31,7 +38,10 @@ public class MoviesService {
         this.restTemplate = restTemplate;
     }
     
+    @Cacheable(value = "moviesByTitle", key = "#title.toLowerCase().trim()", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
     public ResponseEntity<MovieDetailsResponse> searchMovie(String title) {
+        logger.info("[SEARCH MOVIE] Executando busca para titulo: '{}' - CHAMANDO API EXTERNA", title.trim());
+        
         if (!isValidSearchTerm(title)) {
             return createSearchErrorResponse();
         }
@@ -57,7 +67,10 @@ public class MoviesService {
         }
     }
 
+    @Cacheable(value = "movieSearch", key = "#title.toLowerCase().trim() + '_page_' + #page", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
     public ResponseEntity<MovieSearchResponse> searchAllMovies(String title, int page) {
+        logger.info("[SEARCH ALL MOVIES] Executando busca para titulo: '{}', pagina: {} - CHAMANDO API EXTERNA", title.trim(), page);
+        
         long startTime = System.currentTimeMillis();
         
         if (!isValidSearchTerm(title)) {
@@ -94,7 +107,10 @@ public class MoviesService {
         }
     }
 
+    @Cacheable(value = "moviesById", key = "#id.toLowerCase().trim() + '_' + #plot", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
     public ResponseEntity<MovieDetailsResponse> getMovieDetails(String id, String plot) {
+        logger.info("[MOVIE DETAILS] Executando busca para ID: '{}', plot: '{}' - CHAMANDO API EXTERNA", id.trim(), plot);
+        
         String url = String.format("http://www.omdbapi.com/?i=%s&apikey=%s&plot=%s", id, apiKey, plot);
         
         try {
