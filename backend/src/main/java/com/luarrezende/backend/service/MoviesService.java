@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Arrays;
@@ -38,13 +39,13 @@ public class MoviesService {
         this.restTemplate = restTemplate;
     }
     
-    @Cacheable(value = "moviesByTitle", key = "#title.toLowerCase().trim()", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
+    @Cacheable(value = "moviesByTitle", key = "#title != null ? #title.toLowerCase().trim() : 'null'", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
     public ResponseEntity<MovieDetailsResponse> searchMovie(String title) {
-        logger.info("[SEARCH MOVIE] Executando busca para titulo: '{}' - CHAMANDO API EXTERNA", title.trim());
-        
         if (!isValidSearchTerm(title)) {
             return createSearchErrorResponse();
         }
+        
+        logger.info("[SEARCH MOVIE] Executando busca para titulo: '{}' - CHAMANDO API EXTERNA", title.trim());
 
         String url = String.format("http://www.omdbapi.com/?t=%s&apikey=%s", title.trim(), apiKey);
 
@@ -64,6 +65,13 @@ public class MoviesService {
                 .errorMessage("Erro na comunicação com a API: " + e.getMessage())
                 .build();
             return ResponseEntity.status(e.getStatusCode()).body(errorResponse);
+        } catch (Exception e) {
+            logger.error("[SEARCH MOVIE] Erro inesperado ao buscar filme: {}", e.getMessage());
+            MovieDetailsResponse errorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Erro interno do servidor")
+                .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
