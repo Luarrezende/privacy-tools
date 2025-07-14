@@ -10,16 +10,13 @@ class DebugSeasonAPITest {
     void debugOMDBSeasonResponse() {
         RestTemplate restTemplate = new RestTemplate();
         
-        // URL para Breaking Bad Season 1 - usando a chave da aplicação
         String url = "http://www.omdbapi.com/?i=tt0903747&Season=1&apikey=6cbea79b";
         
         try {
-            // Primeiro, vamos ver a resposta raw como String
             String rawResponse = restTemplate.getForObject(url, String.class);
             System.out.println("=== RAW RESPONSE ===");
             System.out.println(rawResponse);
             
-            // Agora tentar mapear para nosso DTO
             SeasonDto seasonDto = restTemplate.getForObject(url, SeasonDto.class);
             System.out.println("=== MAPPED DTO ===");
             System.out.println("Title: " + seasonDto.getTitle());
