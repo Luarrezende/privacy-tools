@@ -3,23 +3,23 @@ export const apiBaseUrlL = "http://localhost:8080/api";
 
 // API Endpoints
 export const apiEndpoints = {
-    MOVIES: {
-        SEARCH_ALL: "/movies/searchall",
-        SEARCH_BY_ID: "/movies/search",
-        BASE: "/movies",
+    movies: {
+        searchAll: "/movies/searchall",
+        searchById: "/movies/search",
+        base: "/movies",
     },
     SERIES: {
-        SEARCH_ALL: "/series/searchall",
-        SEARCH_BY_ID: "/series/search",
-        SEASONS: "/series/seasons",
-        EPISODES: "/series/episodes",
-        BASE: "/series",
+        searchAll: "/series/searchall",
+        searchById: "/series/search",
+        seasons: "/series/seasons",
+        episodes: "/series/episodes",
+        base: "/series",
     },
 };
 
 // Request Configuration
 export const requestConfig = {
-    DEFAULT_HEADERS: {
+    defaultHeaders: {
         "Content-Type": "application/json",
     },
     TIMEOUT: 10000,
