@@ -3,6 +3,9 @@ package com.luarrezende.backend.service;
 import com.luarrezende.backend.clientdto.MovieDetailDto;
 import com.luarrezende.backend.clientdto.SearchAllDto;
 import com.luarrezende.backend.dto.MovieSearchResponse;
+import com.luarrezende.backend.dto.MovieDetailsResponse;
+import com.luarrezende.backend.mapper.MovieMapper;
+import com.luarrezende.backend.mapper.ErrorResponseMapper;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +20,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
@@ -27,6 +31,12 @@ class MoviesServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
+
+    @Mock
+    private MovieMapper movieMapper;
+
+    @Mock
+    private ErrorResponseMapper errorResponseMapper;
 
     @InjectMocks
     private MoviesService moviesService;
@@ -40,13 +50,22 @@ class MoviesServiceTest {
         mockApiResponse.setYear("1999");
         mockApiResponse.setResponse("True");
         
+        MovieDetailsResponse mockMappedResponse = MovieDetailsResponse.builder()
+                .title("The Matrix")
+                .year("1999")
+                .success(true)
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(mockApiResponse);
+        when(movieMapper.convertToMovieDetailsResponse(mockApiResponse))
+                .thenReturn(mockMappedResponse);
 
         ResponseEntity<?> result = moviesService.searchMovie(title);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(MovieDetailDto.class));
+        verify(movieMapper).convertToMovieDetailsResponse(mockApiResponse);
     }
 
     @Test
@@ -56,12 +75,20 @@ class MoviesServiceTest {
         MovieDetailDto mockApiResponse = new MovieDetailDto();
         mockApiResponse.setResponse("False");
         
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Filme não encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(mockApiResponse);
+        when(errorResponseMapper.createMovieNotFoundResponse())
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.searchMovie(title);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(errorResponseMapper).createMovieNotFoundResponse();
     }
 
     @Test
@@ -75,13 +102,23 @@ class MoviesServiceTest {
         mockApiResponse.setPlot("Full plot here");
         mockApiResponse.setResponse("True");
         
+        MovieDetailsResponse mockMappedResponse = MovieDetailsResponse.builder()
+                .id("tt0133093")
+                .title("The Matrix")
+                .plot("Full plot here")
+                .success(true)
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(mockApiResponse);
+        when(movieMapper.convertToMovieDetailsResponse(mockApiResponse))
+                .thenReturn(mockMappedResponse);
 
         ResponseEntity<?> result = moviesService.getMovieDetails(movieId, plot);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(MovieDetailDto.class));
+        verify(movieMapper).convertToMovieDetailsResponse(mockApiResponse);
     }
 
     @Test
@@ -93,31 +130,59 @@ class MoviesServiceTest {
         mockApiResponse.setTotalResults("3");
         mockApiResponse.setResponse("True");
         
+        MovieSearchResponse mockMappedResponse = MovieSearchResponse.builder()
+                .searchTerm(title)
+                .currentPage(page)
+                .totalResults(3)
+                .success(true)
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(SearchAllDto.class)))
                 .thenReturn(mockApiResponse);
+        when(movieMapper.convertToMovieSearchResponse(eq(mockApiResponse), eq(title), eq(page), anyLong()))
+                .thenReturn(mockMappedResponse);
 
         ResponseEntity<?> result = moviesService.searchAllMovies(title, page);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(SearchAllDto.class));
+        verify(movieMapper).convertToMovieSearchResponse(eq(mockApiResponse), eq(title), eq(page), anyLong());
     }
 
     @Test
     void deveTratarTermoDeBuscaInvalidoMuitoCurto() {
         String shortTitle = "Ma"; // Menos de 3 caracteres
 
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Termo de busca muito genérico. Digite pelo menos 3 caracteres.")
+                .build();
+        
+        when(errorResponseMapper.createSearchErrorResponse())
+                .thenReturn(ResponseEntity.badRequest().body(mockErrorResponse));
+
         ResponseEntity<?> result = moviesService.searchMovie(shortTitle);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(errorResponseMapper).createSearchErrorResponse();
     }
 
     @Test
     void deveTratarTermoDeBuscaNulo() {
         String nullTitle = null;
 
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Termo de busca muito genérico. Digite pelo menos 3 caracteres.")
+                .build();
+        
+        when(errorResponseMapper.createSearchErrorResponse())
+                .thenReturn(ResponseEntity.badRequest().body(mockErrorResponse));
+
         ResponseEntity<?> result = moviesService.searchMovie(nullTitle);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(errorResponseMapper).createSearchErrorResponse();
     }
 
     @Test
@@ -136,12 +201,20 @@ class MoviesServiceTest {
     void deveTratarRespostaNulaDaApi() {
         String title = "Matrix";
         
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Filme não encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(null);
+        when(errorResponseMapper.createMovieNotFoundResponse())
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.searchMovie(title);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(errorResponseMapper).createMovieNotFoundResponse();
     }
 
     @Test
@@ -153,13 +226,23 @@ class MoviesServiceTest {
         mockApiResponse.setTotalResults("3");
         mockApiResponse.setResponse("True");
         
+        MovieSearchResponse mockMappedResponse = MovieSearchResponse.builder()
+                .searchTerm(title)
+                .currentPage(1) // O service corrige página 0 para 1
+                .totalResults(3)
+                .success(true)
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(SearchAllDto.class)))
                 .thenReturn(mockApiResponse);
+        when(movieMapper.convertToMovieSearchResponse(eq(mockApiResponse), eq(title), eq(1), anyLong()))
+                .thenReturn(mockMappedResponse);
 
         ResponseEntity<?> result = moviesService.searchAllMovies(title, invalidPage);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(SearchAllDto.class));
+        verify(movieMapper).convertToMovieSearchResponse(eq(mockApiResponse), eq(title), eq(1), anyLong());
     }
 
     @Test
@@ -169,12 +252,23 @@ class MoviesServiceTest {
         SearchAllDto mockApiResponse = new SearchAllDto();
         mockApiResponse.setResponse("False");
         
+        MovieSearchResponse mockErrorResponse = MovieSearchResponse.builder()
+                .searchTerm(title)
+                .currentPage(1)
+                .totalResults(0)
+                .success(false)
+                .errorMessage("Nenhum filme encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(SearchAllDto.class)))
                 .thenReturn(mockApiResponse);
+        when(errorResponseMapper.createSearchAllErrorResponse(eq(title), eq(1), anyLong(), eq("Nenhum filme encontrado")))
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.searchAllMovies(title, 1);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(errorResponseMapper).createSearchAllErrorResponse(eq(title), eq(1), anyLong(), eq("Nenhum filme encontrado"));
     }
 
     @Test
@@ -355,13 +449,24 @@ class MoviesServiceTest {
         String title = "Matrix";
         int page = 1;
         
+        MovieSearchResponse mockErrorResponse = MovieSearchResponse.builder()
+                .searchTerm(title)
+                .currentPage(page)
+                .totalResults(0)
+                .success(false)
+                .errorMessage("Erro na API do OMDB")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(SearchAllDto.class)))
                 .thenReturn(null);
+        when(errorResponseMapper.createSearchAllErrorResponse(eq(title), eq(page), anyLong(), eq("Erro na API do OMDB")))
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.searchAllMovies(title, page);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(SearchAllDto.class));
+        verify(errorResponseMapper).createSearchAllErrorResponse(eq(title), eq(page), anyLong(), eq("Erro na API do OMDB"));
     }
 
     @Test
@@ -372,26 +477,45 @@ class MoviesServiceTest {
         SearchAllDto mockApiResponse = new SearchAllDto();
         mockApiResponse.setResponse("False");
         
+        MovieSearchResponse mockErrorResponse = MovieSearchResponse.builder()
+                .searchTerm(title)
+                .currentPage(page)
+                .totalResults(0)
+                .success(false)
+                .errorMessage("Nenhum filme encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(SearchAllDto.class)))
                 .thenReturn(mockApiResponse);
+        when(errorResponseMapper.createSearchAllErrorResponse(eq(title), eq(page), anyLong(), eq("Nenhum filme encontrado")))
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.searchAllMovies(title, page);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(SearchAllDto.class));
+        verify(errorResponseMapper).createSearchAllErrorResponse(eq(title), eq(page), anyLong(), eq("Nenhum filme encontrado"));
     }
 
     @Test
     void deveTestarIsEmptyResponseComResponseNullNoSearchMovie() {
         String title = "Matrix";
         
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Filme não encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(null);
+        when(errorResponseMapper.createMovieNotFoundResponse())
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.searchMovie(title);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(MovieDetailDto.class));
+        verify(errorResponseMapper).createMovieNotFoundResponse();
     }
 
     @Test
@@ -401,13 +525,21 @@ class MoviesServiceTest {
         MovieDetailDto mockApiResponse = new MovieDetailDto();
         mockApiResponse.setResponse("False");
         
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Filme não encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(mockApiResponse);
+        when(errorResponseMapper.createMovieNotFoundResponse())
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.searchMovie(title);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(MovieDetailDto.class));
+        verify(errorResponseMapper).createMovieNotFoundResponse();
     }
 
     @Test
@@ -415,13 +547,21 @@ class MoviesServiceTest {
         String movieId = "tt0133093";
         String plot = "full";
         
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Filme não encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(null);
+        when(errorResponseMapper.createMovieNotFoundResponse())
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.getMovieDetails(movieId, plot);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(MovieDetailDto.class));
+        verify(errorResponseMapper).createMovieNotFoundResponse();
     }
 
     @Test
@@ -432,13 +572,21 @@ class MoviesServiceTest {
         MovieDetailDto mockApiResponse = new MovieDetailDto();
         mockApiResponse.setResponse("False");
         
+        MovieDetailsResponse mockErrorResponse = MovieDetailsResponse.builder()
+                .success(false)
+                .errorMessage("Filme não encontrado")
+                .build();
+        
         when(restTemplate.getForObject(anyString(), eq(MovieDetailDto.class)))
                 .thenReturn(mockApiResponse);
+        when(errorResponseMapper.createMovieNotFoundResponse())
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
 
         ResponseEntity<?> result = moviesService.getMovieDetails(movieId, plot);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).getForObject(anyString(), eq(MovieDetailDto.class));
+        verify(errorResponseMapper).createMovieNotFoundResponse();
     }
 
     @Test
@@ -446,10 +594,22 @@ class MoviesServiceTest {
         String invalidTitle = "ab"; // Menos de 3 caracteres
         int page = 1;
 
+        MovieSearchResponse mockErrorResponse = MovieSearchResponse.builder()
+                .searchTerm(invalidTitle)
+                .currentPage(page)
+                .totalResults(0)
+                .success(false)
+                .errorMessage("Termo de busca muito genérico. Digite pelo menos 3 caracteres.")
+                .build();
+        
+        when(errorResponseMapper.createSearchAllErrorResponse(eq(invalidTitle), eq(page), anyLong(), eq("Termo de busca muito genérico. Digite pelo menos 3 caracteres.")))
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
+
         ResponseEntity<?> result = moviesService.searchAllMovies(invalidTitle, page);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate, never()).getForObject(anyString(), eq(SearchAllDto.class));
+        verify(errorResponseMapper).createSearchAllErrorResponse(eq(invalidTitle), eq(page), anyLong(), eq("Termo de busca muito genérico. Digite pelo menos 3 caracteres."));
     }
 
     @Test
@@ -457,10 +617,22 @@ class MoviesServiceTest {
         String nullTitle = null;
         int page = 1;
 
+        MovieSearchResponse mockErrorResponse = MovieSearchResponse.builder()
+                .searchTerm("")
+                .currentPage(page)
+                .totalResults(0)
+                .success(false)
+                .errorMessage("Termo de busca muito genérico. Digite pelo menos 3 caracteres.")
+                .build();
+        
+        when(errorResponseMapper.createSearchAllErrorResponse(eq(""), eq(page), anyLong(), eq("Termo de busca muito genérico. Digite pelo menos 3 caracteres.")))
+                .thenReturn(ResponseEntity.ok(mockErrorResponse));
+
         ResponseEntity<?> result = moviesService.searchAllMovies(nullTitle, page);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate, never()).getForObject(anyString(), eq(SearchAllDto.class));
+        verify(errorResponseMapper).createSearchAllErrorResponse(eq(""), eq(page), anyLong(), eq("Termo de busca muito genérico. Digite pelo menos 3 caracteres."));
     }
 
     @Test

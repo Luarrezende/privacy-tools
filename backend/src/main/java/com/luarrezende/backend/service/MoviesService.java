@@ -2,10 +2,10 @@ package com.luarrezende.backend.service;
 
 import com.luarrezende.backend.dto.MovieDetailsResponse;
 import com.luarrezende.backend.dto.MovieSearchResponse;
-import com.luarrezende.backend.dto.MovieSummary;
 import com.luarrezende.backend.clientdto.MovieDetailDto;
 import com.luarrezende.backend.clientdto.SearchAllDto;
-import com.luarrezende.backend.clientdto.SearchDto;
+import com.luarrezende.backend.mapper.MovieMapper;
+import com.luarrezende.backend.mapper.ErrorResponseMapper;
 
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
@@ -18,31 +18,30 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @EnableCaching
 public class MoviesService {
     private static final Logger logger = LoggerFactory.getLogger(MoviesService.class);
-    private static final int itensPerPage = 10;
     private static final int minSearchLen = 3;
     private final RestTemplate restTemplate;
+    private final MovieMapper movieMapper;
+    private final ErrorResponseMapper errorResponseMapper;
     
     @Value("${omdb.api.key}")
     private String apiKey;
 
     @Autowired
-    public MoviesService(RestTemplate restTemplate) {
+    public MoviesService(RestTemplate restTemplate, MovieMapper movieMapper, ErrorResponseMapper errorResponseMapper) {
         this.restTemplate = restTemplate;
+        this.movieMapper = movieMapper;
+        this.errorResponseMapper = errorResponseMapper;
     }
     
     @Cacheable(value = "moviesByTitle", key = "#title != null ? #title.toLowerCase().trim() : 'null'", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
     public ResponseEntity<MovieDetailsResponse> searchMovie(String title) {
         if (!isValidSearchTerm(title)) {
-            return createSearchErrorResponse();
+            return errorResponseMapper.createSearchErrorResponse();
         }
         
         logger.info("[SEARCH MOVIE] Executando busca para titulo: '{}' - CHAMANDO API EXTERNA", title.trim());
@@ -53,10 +52,10 @@ public class MoviesService {
             MovieDetailDto omdbResponse = restTemplate.getForObject(url, MovieDetailDto.class);
             
             if (isEmptyResponse(omdbResponse)) {
-                return createMovieNotFoundResponse();
+                return errorResponseMapper.createMovieNotFoundResponse();
             }
             
-            MovieDetailsResponse response = convertToMovieDetailsResponse(omdbResponse);
+            MovieDetailsResponse response = movieMapper.convertToMovieDetailsResponse(omdbResponse);
             return ResponseEntity.ok(response);
             
         } catch (HttpClientErrorException e) {
@@ -80,7 +79,7 @@ public class MoviesService {
         long startTime = System.currentTimeMillis();
         
         if (!isValidSearchTerm(title)) {
-            return createSearchAllErrorResponse(title != null ? title : "", page, startTime, "Termo de busca muito genérico. Digite pelo menos 3 caracteres.");
+            return errorResponseMapper.createSearchAllErrorResponse(title != null ? title : "", page, startTime, "Termo de busca muito genérico. Digite pelo menos 3 caracteres.");
         }
 
         logger.info("[SEARCH ALL MOVIES] Executando busca para titulo: '{}', pagina: {} - CHAMANDO API EXTERNA", title.trim(), page);
@@ -96,10 +95,10 @@ public class MoviesService {
             
             if (isEmptySearchResponse(omdbResponse)) {
                 String errorMessage = omdbResponse != null ? "Nenhum filme encontrado" : "Erro na API do OMDB";
-                return createSearchAllErrorResponse(title.trim(), page, startTime, errorMessage);
+                return errorResponseMapper.createSearchAllErrorResponse(title.trim(), page, startTime, errorMessage);
             }
             
-            MovieSearchResponse response = convertToMovieSearchResponse(omdbResponse, title.trim(), page, startTime);
+            MovieSearchResponse response = movieMapper.convertToMovieSearchResponse(omdbResponse, title.trim(), page, startTime);
             return ResponseEntity.ok(response);
             
         } catch (HttpClientErrorException e) {
@@ -125,10 +124,10 @@ public class MoviesService {
             MovieDetailDto omdbResponse = restTemplate.getForObject(url, MovieDetailDto.class);
             
             if (isEmptyResponse(omdbResponse)) {
-                return createMovieNotFoundResponse();
+                return errorResponseMapper.createMovieNotFoundResponse();
             }
             
-            MovieDetailsResponse response = convertToMovieDetailsResponse(omdbResponse);
+            MovieDetailsResponse response = movieMapper.convertToMovieDetailsResponse(omdbResponse);
             return ResponseEntity.ok(response);
             
         } catch (HttpClientErrorException e) {
@@ -151,128 +150,4 @@ public class MoviesService {
     private boolean isEmptySearchResponse(SearchAllDto response) {
         return response == null || "False".equals(response.getResponse());
     }
-    
-    private MovieSearchResponse convertToMovieSearchResponse(SearchAllDto omdbDto, String searchTerm, int currentPage, long startTime) {
-        int totalResults = parseIntegerSafely(omdbDto.getTotalResults());
-        int totalPages = calculateTotalPages(totalResults);
-        List<MovieSummary> movies = convertSearchResults(omdbDto.getSearch());
-        
-        return MovieSearchResponse.builder()
-            .movies(movies)
-            .totalResults(totalResults)
-            .currentPage(currentPage)
-            .totalPages(totalPages)
-            .hasNextPage(currentPage < totalPages)
-            .hasPreviousPage(currentPage > 1)
-            .searchTerm(searchTerm)
-            .searchType("title")
-            .success(true)
-            .searchTime(System.currentTimeMillis() - startTime)
-            .itemsPerPage(itensPerPage)
-            .build();
-    }
-    
-    private MovieSummary convertToMovieSummary(SearchDto searchItem) {
-        return MovieSummary.builder()
-            .id(searchItem.getImdbID())
-            .title(searchItem.getTitle())
-            .year(searchItem.getYear())
-            .type(searchItem.getType())
-            .poster(searchItem.getPoster())
-            .available(true)
-            .build();
-    }
-
-    private MovieDetailsResponse convertToMovieDetailsResponse(MovieDetailDto omdbDto) {
-        return MovieDetailsResponse.builder()
-            .id(omdbDto.getImdbID())
-            .title(omdbDto.getTitle())
-            .year(omdbDto.getYear())
-            .genre(omdbDto.getGenre())
-            .director(omdbDto.getDirector())
-            .plot(omdbDto.getPlot())
-            .rated(omdbDto.getRated())
-            .runtime(omdbDto.getRuntime())
-            .language(omdbDto.getLanguage())
-            .country(omdbDto.getCountry())
-            .actors(omdbDto.getActors())
-            .writer(omdbDto.getWriter())
-            .imdbRating(omdbDto.getImdbRating())
-            .imdbVotes(omdbDto.getImdbVotes())
-            .metascore(omdbDto.getMetascore())
-            .ratings(convertRatings(omdbDto.getRatings()))
-            .poster(omdbDto.getPoster())
-            .awards(omdbDto.getAwards())
-            .released(omdbDto.getReleased())
-            .dvd(omdbDto.getDvd())
-            .boxOffice(omdbDto.getBoxOffice())
-            .totalSeasons(omdbDto.getTotalSeasons())
-            .type(omdbDto.getType())
-            .success(true)
-            .build();
-    }
-    
-    private int parseIntegerSafely(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-    
-    private int calculateTotalPages(int totalResults) {
-        return (int) Math.ceil((double) totalResults / itensPerPage);
-    }
-    
-    private List<MovieSummary> convertSearchResults(SearchDto[] searchResults) {
-        if (searchResults == null) {
-            return Collections.emptyList();
-        }
-        
-        return Arrays.stream(searchResults)
-            .map(this::convertToMovieSummary)
-            .collect(Collectors.toList());
-    }
-    
-    private List<MovieDetailsResponse.Rating> convertRatings(Object[] ratings) {
-        if (ratings == null) {
-            return Collections.emptyList();
-        }
-        
-        return Arrays.stream(ratings)
-            .map(rating -> MovieDetailsResponse.Rating.builder()
-                .source(((com.luarrezende.backend.clientdto.RatingsDto) rating).getSource())
-                .value(((com.luarrezende.backend.clientdto.RatingsDto) rating).getValue())
-                .build())
-            .collect(Collectors.toList());
-    }
-    
-    private ResponseEntity<MovieDetailsResponse> createSearchErrorResponse() {
-        MovieDetailsResponse errorResponse = MovieDetailsResponse.builder()
-            .success(false)
-            .errorMessage("Termo de busca muito genérico. Digite pelo menos 3 caracteres.")
-            .build();
-        return ResponseEntity.badRequest().body(errorResponse);
-    }
-    
-    private ResponseEntity<MovieDetailsResponse> createMovieNotFoundResponse() {
-        MovieDetailsResponse errorResponse = MovieDetailsResponse.builder()
-            .success(false)
-            .errorMessage("Filme não encontrado")
-            .build();
-        return ResponseEntity.ok(errorResponse);
-    }
-    
-    private ResponseEntity<MovieSearchResponse> createSearchAllErrorResponse(String searchTerm, int page, long startTime, String message) {
-        MovieSearchResponse errorResponse = MovieSearchResponse.builder()
-            .success(false)
-            .errorMessage(message)
-            .searchTerm(searchTerm)
-            .currentPage(page)
-            .totalResults(0)
-            .searchTime(System.currentTimeMillis() - startTime)
-            .build();
-        return ResponseEntity.ok(errorResponse);
-    }
-    
 }
