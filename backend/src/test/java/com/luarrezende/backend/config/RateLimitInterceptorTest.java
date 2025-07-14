@@ -45,7 +45,6 @@ class RateLimitInterceptorTest {
         PrintWriter printWriter = new PrintWriter(stringWriter);
         when(response.getWriter()).thenReturn(printWriter);
 
-        // Simula 101 requisições para exceder o limite de 100
         for (int i = 0; i < 101; i++) {
             rateLimitInterceptor.preHandle(request, response, handler);
         }
@@ -97,12 +96,10 @@ class RateLimitInterceptorTest {
         PrintWriter printWriter = new PrintWriter(stringWriter);
         when(response.getWriter()).thenReturn(printWriter);
 
-        // Consome todo o limite
         for (int i = 0; i < 100; i++) {
             rateLimitInterceptor.preHandle(request, response, handler);
         }
 
-        // Tenta uma requisição adicional
         rateLimitInterceptor.preHandle(request, response, handler);
 
         String responseContent = stringWriter.toString();
@@ -111,7 +108,6 @@ class RateLimitInterceptorTest {
 
     @Test
     void devePermitirMultiplasRequisicoesDentroDoLimite() throws Exception {
-        // Testa 50 requisições, que deve estar dentro do limite
         for (int i = 0; i < 50; i++) {
             boolean result = rateLimitInterceptor.preHandle(request, response, handler);
             assertThat(result).isTrue();

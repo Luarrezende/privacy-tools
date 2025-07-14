@@ -144,4 +144,46 @@ class CustomCacheResolverTest {
         assertThat(result).hasSize(1);
         assertThat(result.iterator().next()).isEqualTo(cache);
     }
+
+    @Test
+    void deveResolverCachesQuandoOperacaoNaoForCacheableOperation() {
+        String cacheName = "testCache";
+        Object[] args = {"test"};
+        
+        CacheOperation nonCacheableOperation = mock(CacheOperation.class);
+        when(nonCacheableOperation.getCacheNames()).thenReturn(Set.of(cacheName));
+        
+        when(context.getOperation()).thenReturn(nonCacheableOperation);
+        when(context.getArgs()).thenReturn(args);
+        when(cacheManager.getCache(cacheName)).thenReturn(cache);
+
+        Collection<? extends Cache> result = customCacheResolver.resolveCaches(context);
+
+        assertThat(result).isNotEmpty();
+        assertThat(result).hasSize(1);
+        
+        verify(cache, never()).get(any());
+        verify(cacheManager).getCache(cacheName);
+    }
+
+    @Test
+    void deveResolverCachesQuandoOperacaoForCacheableOperation() {
+        String cacheName = "myCache";
+        Object[] args = {"test"};
+
+        when(context.getOperation()).thenReturn(cacheableOperation);
+        when(cacheableOperation.getCacheNames()).thenReturn(Set.of(cacheName));
+        when(context.getArgs()).thenReturn(args);
+
+        when(cacheManager.getCache(cacheName)).thenReturn(cache);
+        when(cache.get("test")).thenReturn(null); // Cache miss
+
+        Collection<? extends Cache> result = customCacheResolver.resolveCaches(context);
+
+        assertThat(result).isNotEmpty();
+        assertThat(result).hasSize(1);
+        
+        verify(cache).get("test");
+        verify(cacheManager, times(2)).getCache(cacheName);
+    }
 }

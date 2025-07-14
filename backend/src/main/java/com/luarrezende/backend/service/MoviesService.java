@@ -75,15 +75,15 @@ public class MoviesService {
         }
     }
 
-    @Cacheable(value = "movieSearch", key = "#title.toLowerCase().trim() + '_page_' + #page", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
+    @Cacheable(value = "movieSearch", key = "#title != null ? (#title.toLowerCase().trim() + '_page_' + #page) : ('null_page_' + #page)", unless = "#result.body.success == false", cacheResolver = "cacheResolver")
     public ResponseEntity<MovieSearchResponse> searchAllMovies(String title, int page) {
-        logger.info("[SEARCH ALL MOVIES] Executando busca para titulo: '{}', pagina: {} - CHAMANDO API EXTERNA", title.trim(), page);
-        
         long startTime = System.currentTimeMillis();
         
         if (!isValidSearchTerm(title)) {
-            return createSearchAllErrorResponse(title, page, startTime, "Termo de busca muito genérico. Digite pelo menos 3 caracteres.");
+            return createSearchAllErrorResponse(title != null ? title : "", page, startTime, "Termo de busca muito genérico. Digite pelo menos 3 caracteres.");
         }
+
+        logger.info("[SEARCH ALL MOVIES] Executando busca para titulo: '{}', pagina: {} - CHAMANDO API EXTERNA", title.trim(), page);
 
         if (page < 1) {
             page = 1;
