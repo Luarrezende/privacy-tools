@@ -80,8 +80,8 @@ class CacheConfigAdvancedTest {
     void deveTerTodosOsCachesEsperadosConfigurados() {
         java.util.Collection<String> cacheNames = cacheManager.getCacheNames();
 
-        assertThat(cacheNames).contains("moviesByTitle", "moviesById", "movieSearch");
-        assertThat(cacheNames).hasSize(3);
+        assertThat(cacheNames).contains("moviesByTitle", "moviesById", "movieSearch", "seriesByTitle", "seriesById", "seriesSearch", "seriesSeason", "seriesEpisode");
+        assertThat(cacheNames).hasSize(8);
     }
 
     @Test

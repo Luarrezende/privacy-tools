@@ -13,7 +13,10 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("moviesByTitle", "moviesById", "movieSearch");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager(
+            "moviesByTitle", "moviesById", "movieSearch",
+            "seriesByTitle", "seriesById", "seriesSearch", "seriesSeason", "seriesEpisode"
+        );
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.HOURS)
                 .maximumSize(500)
