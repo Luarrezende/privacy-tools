@@ -1,37 +1,31 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useSearch } from '../context/SearchContext';
 import styles from './MainLayout.module.css';
 
 const MainLayout = ({ children }) => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
-    year: '',
-    genre: '',
-    type: ''
-  });
+  const {
+    searchQuery,
+    filters,
+    isSearchOpen,
+    isFiltersOpen,
+    handleSearch,
+    handleFilterChange,
+    toggleSearch,
+    toggleFilters
+  } = useSearch();
 
   const location = useLocation();
 
-  const handleSearchToggle = () => {
-    setIsSearchOpen(!isSearchOpen);
-    if (!isSearchOpen) {
-      setTimeout(() => {
-        document.getElementById('searchInput')?.focus();
-      }, 100);
+  const handleSearchInput = (e) => {
+    handleSearch(e.target.value);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      // A busca será executada automaticamente pela página Home
+      console.log('Busca executada:', searchQuery);
     }
-  };
-
-  const handleFiltersToggle = () => {
-    setIsFiltersOpen(!isFiltersOpen);
-  };
-
-  const handleFilterChange = (filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
   };
 
   const isActive = (path) => location.pathname === path;
@@ -59,7 +53,7 @@ const MainLayout = ({ children }) => {
 
           <button 
             className={styles.sidebarButton}
-            onClick={handleSearchToggle}
+            onClick={toggleSearch}
           >
             <i className="fas fa-search"></i>
             <span>Pesquisar</span>
@@ -67,7 +61,7 @@ const MainLayout = ({ children }) => {
 
           <button 
             className={styles.sidebarButton}
-            onClick={handleFiltersToggle}
+            onClick={toggleFilters}
           >
             <i className="fas fa-filter"></i>
             <span>Filtros</span>
@@ -109,7 +103,8 @@ const MainLayout = ({ children }) => {
             type="text"
             placeholder="Buscar filmes ou séries..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchInput}
+            onKeyPress={handleKeyPress}
           />
         </div>
 

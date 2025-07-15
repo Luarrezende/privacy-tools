@@ -60,8 +60,8 @@
 .resultsTitle {
   font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 2rem;
-  color: #f8fafc;
+  color: #fff;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
@@ -69,7 +69,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
-  padding: 1rem;
+  margin-bottom: 2rem;
 }
 
 .empty {
@@ -94,6 +94,15 @@
   font-size: 1rem;
   max-width: 400px;
   margin: 0 auto;
+}
+
+/* Melhoria no layout para paginação */
+.results > * {
+  margin-bottom: 1rem;
+}
+
+.results > *:last-child {
+  margin-bottom: 0;
 }
 
 /* Responsividade */
