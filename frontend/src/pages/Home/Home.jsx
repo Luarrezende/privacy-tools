@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useSearch } from '../../context/SearchContext';
-import MovieCard from '../../components/ui/MovieCard';
-import Pagination from '../../components/ui/Pagination';
+import MovieCard from '../../components/ui/MovieCard/MovieCard';
+import Pagination from '../../components/ui/Pagination/Pagination';
+import ActiveFilters from '../../components/ui/ActiveFilters/ActiveFilters';
 import { apiBaseUrlL, apiEndpoints } from '../../constants/api';
+import { applyFilters } from '../../constants/filters';
 import styles from './Home.module.css';
 
 const Home = () => {
-  const { searchQuery, filters, pagination, handlePageChange, updatePagination } = useSearch();
-  const [results, setResults] = useState([]);
+  const { 
+    searchQuery, 
+    filters, 
+    pagination, 
+    handlePageChange, 
+    updatePagination, 
+    handleFilterChange, 
+    clearSearch 
+  } = useSearch();
+  const [allResults, setAllResults] = useState([]);
+  const [filteredResults, setFilteredResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Função para buscar filmes e séries
   const searchContent = async (query, page = 1) => {
     if (!query.trim()) {
-      setResults([]);
+      setAllResults([]);
+      setFilteredResults([]);
       return;
     }
 
@@ -22,13 +33,11 @@ const Home = () => {
     setError(null);
 
     try {
-      // Buscar filmes e séries em paralelo
       const [moviesResponse, seriesResponse] = await Promise.all([
         fetch(`${apiBaseUrlL}${apiEndpoints.movies.searchAll}?title=${encodeURIComponent(query)}&page=${page}`),
         fetch(`${apiBaseUrlL}${apiEndpoints.SERIES.searchAll}?title=${encodeURIComponent(query)}&page=${page}`)
       ]);
 
-      // Verificar se as respostas são válidas e parsear JSON
       let moviesData = [];
       let seriesData = [];
       let moviesJson = {};
@@ -37,30 +46,53 @@ const Home = () => {
       if (moviesResponse.ok) {
         moviesJson = await moviesResponse.json();
         console.log('Movies API Response:', moviesJson);
-        // Acessar a propriedade movies do objeto retornado
-        moviesData = Array.isArray(moviesJson.movies) ? moviesJson.movies : [];
+        if (Array.isArray(moviesJson)) {
+          moviesData = moviesJson;
+        } else if (Array.isArray(moviesJson.movies)) {
+          moviesData = moviesJson.movies;
+        } else if (Array.isArray(moviesJson.Search)) {
+          moviesData = moviesJson.Search;
+        } else if (Array.isArray(moviesJson.results)) {
+          moviesData = moviesJson.results;
+        } else {
+          moviesData = [];
+        }
       }
 
       if (seriesResponse.ok) {
         seriesJson = await seriesResponse.json();
         console.log('Series API Response:', seriesJson);
-        // Acessar a propriedade series do objeto retornado
-        seriesData = Array.isArray(seriesJson.series) ? seriesJson.series : [];
+        if (Array.isArray(seriesJson)) {
+          seriesData = seriesJson;
+        } else if (Array.isArray(seriesJson.series)) {
+          seriesData = seriesJson.series;
+        } else if (Array.isArray(seriesJson.Search)) {
+          seriesData = seriesJson.Search;
+        } else if (Array.isArray(seriesJson.results)) {
+          seriesData = seriesJson.results;
+        } else {
+          seriesData = [];
+        }
       }
 
-      // Combinar resultados
       const allResults = [
-        ...moviesData.map(item => ({ ...item, type: 'movie' })),
-        ...seriesData.map(item => ({ ...item, type: 'series' }))
+        ...moviesData,
+        ...seriesData
       ];
 
       console.log('Movies found:', moviesData.length);
       console.log('Series found:', seriesData.length);
       console.log('Sample movie data:', moviesData[0]);
       console.log('Sample series data:', seriesData[0]);
-      console.log('Combined results:', allResults);
+      console.log('Combined results length:', allResults.length);
+      console.log('Combined results sample:', allResults[0]);
       
-      setResults(allResults);
+      setAllResults(allResults);
+      
+      const filtered = applyFilters(allResults, filters);
+      console.log('Filtered results length:', filtered.length);
+      console.log('Filtered results sample:', filtered[0]);
+      setFilteredResults(filtered);
       updatePagination(moviesJson, seriesJson);
     } catch (err) {
       setError('Erro ao buscar conteúdo');
@@ -70,34 +102,33 @@ const Home = () => {
     }
   };
 
-  // Executar busca quando searchQuery ou página mudar
   useEffect(() => {
     searchContent(searchQuery, pagination.currentPage);
   }, [searchQuery, pagination.currentPage]);
 
-  // Função para assistir (placeholder)
-  const handleWatch = (item) => {
-    console.log('Assistir:', item);
-    // Aqui você pode navegar para a página de detalhes ou player
-  };
+  useEffect(() => {
+    if (allResults.length > 0) {
+      const filtered = applyFilters(allResults, filters);
+      setFilteredResults(filtered);
+    }
+  }, [filters, allResults]);
 
-  // Função para adicionar à lista (placeholder)
-  const handleAddToList = (item) => {
-    console.log('Adicionar à lista:', item);
-    // Aqui você pode implementar a lógica de favoritos
+  const handleRemoveFilter = (filterKey) => {
+    if (filterKey === 'sortBy') {
+      handleFilterChange('sortBy', 'relevance');
+    } else {
+      handleFilterChange(filterKey, '');
+    }
   };
 
   return (
     <div className={styles.container}>
-      {/* Título */}
-      <div className={styles.header}>
-        <h1 className={styles.title}>Privacy Tools</h1>
-        <p className={styles.subtitle}>
-          Busque por filmes e séries usando a barra de pesquisa acima
-        </p>
-      </div>
+      <ActiveFilters 
+        filters={filters}
+        onRemoveFilter={handleRemoveFilter}
+        onClearAll={clearSearch}
+      />
 
-      {/* Loading */}
       {loading && (
         <div className={styles.loading}>
           <i className="fas fa-spinner fa-spin"></i>
@@ -105,7 +136,6 @@ const Home = () => {
         </div>
       )}
 
-      {/* Erro */}
       {error && (
         <div className={styles.error}>
           <i className="fas fa-exclamation-triangle"></i>
@@ -113,36 +143,27 @@ const Home = () => {
         </div>
       )}
 
-      {/* Resultados */}
-      {results.length > 0 && (
+      {filteredResults.length > 0 && (
         <div className={styles.results}>
           <h2 className={styles.resultsTitle}>
-            Resultados da Busca ({pagination.totalResults})
+            Resultados da Busca ({filteredResults.length})
           </h2>
           
           <div className={styles.grid}>
-            {results.map((item, index) => (
+            {filteredResults.map((item, index) => (
               <MovieCard
                 key={`${item.type}-${item.id || index}`}
                 movie={{
                   id: item.id,
                   title: item.title,
-                  rating: item.imdbRating ? Math.round(item.imdbRating * 10) : 85,
-                  ageRating: item.rated || '16',
                   year: item.year,
-                  duration: item.runtime || '2h 18min',
-                  genres: item.genre ? item.genre.split(', ') : ['Drama'],
-                  description: item.plot || item.description || 'Descrição não disponível',
-                  poster: item.poster || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1025&q=80',
+                  poster: item.poster !== 'N/A' ? item.poster : 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1025&q=80',
                   type: item.type
                 }}
-                onWatch={handleWatch}
-                onAddToList={handleAddToList}
               />
             ))}
           </div>
 
-          {/* Paginação */}
           <Pagination
             currentPage={pagination.currentPage}
             totalPages={pagination.totalPages}
@@ -154,12 +175,19 @@ const Home = () => {
         </div>
       )}
 
-      {/* Estado inicial - sem busca */}
-      {!loading && !error && results.length === 0 && (
+      {!loading && !error && filteredResults.length === 0 && searchQuery && (
+        <div className={styles.empty}>
+          <i className="fas fa-filter"></i>
+          <h3>Nenhum resultado encontrado</h3>
+          <p>Tente ajustar os filtros ou buscar por outros termos</p>
+        </div>
+      )}
+
+      {!loading && !error && !searchQuery && (
         <div className={styles.empty}>
           <i className="fas fa-search"></i>
           <h3>Comece sua busca</h3>
-          <p>Use a barra de pesquisa acima para encontrar filmes e séries</p>
+          <p>Clique no icone de pesquisa para encontrar filmes e séries</p>
         </div>
       )}
     </div>

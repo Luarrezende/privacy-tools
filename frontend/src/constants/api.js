@@ -6,13 +6,15 @@ export const apiEndpoints = {
     movies: {
         searchAll: "/movies/searchall",
         searchById: "/movies/search",
+        details: "/movies/details",
         base: "/movies",
     },
     SERIES: {
         searchAll: "/series/searchall",
-        searchById: "/series/search",
-        seasons: "/series/seasons",
-        episodes: "/series/episodes",
+        searchById: "/series/search", 
+        details: "/series/details",
+        seasons: "/series/season",
+        episodes: "/series/episode",
         base: "/series",
     },
 };

@@ -26,7 +26,6 @@ const Pagination = ({
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
-    // Primeira página
     if (startPage > 1) {
       pages.push(
         <button
@@ -42,7 +41,6 @@ const Pagination = ({
       }
     }
 
-    // Páginas visíveis
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <button
@@ -55,7 +53,6 @@ const Pagination = ({
       );
     }
 
-    // Última página
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
         pages.push(<span key="ellipsis2" className={styles.ellipsis}>...</span>);

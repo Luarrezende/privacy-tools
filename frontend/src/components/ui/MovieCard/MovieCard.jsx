@@ -1,34 +1,43 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useFavorites } from '../../../context/FavoritesContext';
 import styles from './MovieCard.module.css';
 
 const MovieCard = ({ 
-  movie, 
-  onWatch, 
-  onAddToList 
+  movie
 }) => {
+  const navigate = useNavigate();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const {
     title,
-    rating,
-    ageRating,
     year,
-    duration,
-    genres,
-    description,
-    poster
+    poster,
+    type
   } = movie;
 
   const handleWatch = (e) => {
     e.stopPropagation();
-    onWatch?.(movie);
+    // Navegar para a página de detalhes
+    handleCardClick();
   };
 
   const handleAddToList = (e) => {
     e.stopPropagation();
-    onAddToList?.(movie);
+    toggleFavorite(movie);
   };
 
+  const handleCardClick = () => {
+    if (type === 'movie') {
+      navigate(`/movies/${movie.id}`);
+    } else if (type === 'series') {
+      navigate(`/series/${movie.id}`);
+    }
+  };
+
+  const isInFavorites = isFavorite(movie.id);
+
   return (
-    <div className={styles.movieCard}>
+    <div className={styles.movieCard} onClick={handleCardClick}>
       <div className={styles.cardInner}>
         <div 
           className={styles.poster}
@@ -44,8 +53,8 @@ const MovieCard = ({
 
         <div className={styles.badges}>
           <div className={styles.badge}>
-            <i className="fas fa-star"></i>
-            <span>Popular</span>
+            <i className="fas fa-film"></i>
+            <span>{type === 'movie' ? 'Filme' : type === 'series' ? 'Série' : 'Conteúdo'}</span>
           </div>
         </div>
 
@@ -53,30 +62,21 @@ const MovieCard = ({
           <div className={styles.basicInfo}>
             <div className={styles.title}>{title}</div>
             <div className={styles.info}>
-              <span className={styles.rating}>{rating}% relevante</span>
-              <span className={styles.ageRating}>{ageRating}</span>
-              <span>{year}</span>
-              <span>{duration}</span>
+              <span className={styles.year}>{year}</span>
             </div>
           </div>
 
           <div className={styles.additionalContent}>
-            <div className={styles.genre}>
-              {genres?.map((genre, index) => (
-                <span key={index}>{genre}</span>
-              ))}
-            </div>
-
-            <div className={styles.description}>
-              {description}
-            </div>
-
             <div className={styles.buttons}>
               <button className={styles.playBtn} onClick={handleWatch}>
                 <i className="fas fa-play"></i> Assistir
               </button>
-              <button className={styles.addBtn} onClick={handleAddToList}>
-                <i className="fas fa-plus"></i> Lista
+              <button 
+                className={`${styles.addBtn} ${isInFavorites ? styles.favorite : ''}`} 
+                onClick={handleAddToList}
+              >
+                <i className={isInFavorites ? "fas fa-heart" : "fas fa-plus"}></i> 
+                {isInFavorites ? 'Favorito' : 'Lista'}
               </button>
             </div>
           </div>

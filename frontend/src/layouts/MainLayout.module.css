@@ -23,10 +23,16 @@
   background: linear-gradient(135deg, var(--darker), var(--dark));
   color: var(--light);
   overflow-x: hidden;
+  overflow-y: visible;
+  position: relative;
 }
 
 /* Sidebar estilizada */
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
   width: 5rem;
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(10px);
@@ -92,7 +98,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   text-decoration: none;
   border: none;
   background: transparent;
@@ -149,9 +155,16 @@
 /* Conteúdo principal */
 .mainContent {
   flex: 1;
+  margin-left: 5rem;
   padding: 2rem;
   position: relative;
   overflow: hidden;
+  min-height: 100vh;
+  transition: margin-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.mainContent.expanded {
+  margin-left: 13.75rem;
 }
 
 .mainContent::before {
@@ -215,11 +228,8 @@
 
 /* Filtros */
 .filtersContainer {
-  max-width: 50rem;
+  max-width: 60rem;
   margin: 0 auto 1.875rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11.25rem, 1fr));
-  gap: 1rem;
   opacity: 0;
   height: 0;
   overflow: hidden;
@@ -229,11 +239,18 @@
 .filtersContainer.open {
   opacity: 1;
   height: auto;
-  padding: 1.25rem;
+  padding: 1.5rem;
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(10px);
   border-radius: 1rem;
   border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .filterField {
@@ -259,6 +276,56 @@
   background: var(--dark);
 }
 
+/* Badge de contagem para favoritos */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ff6b6b, #ff2b2b);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50px;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse 2s ease-in-out infinite;
+  z-index: 15;
+  border: 2px solid var(--darker);
+}
+
+/* Ações dos filtros */
+.filterActions {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.clearFiltersBtn {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.clearFiltersBtn:hover {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .container {
@@ -266,6 +333,9 @@
   }
 
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: auto;
     flex-direction: row;
@@ -289,6 +359,13 @@
   }
 
   .mainContent {
+    margin-left: 0;
+    margin-top: 5rem;
     padding: 1.25rem 0.9375rem;
+  }
+
+  .mainContent.expanded {
+    margin-left: 0;
+    margin-top: 5rem;
   }
 }

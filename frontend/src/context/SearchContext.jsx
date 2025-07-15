@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const SearchContext = createContext();
 
@@ -11,11 +12,14 @@ export const useSearch = () => {
 };
 
 export const SearchProvider = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     year: '',
-    genre: '',
-    type: ''
+    type: '',
+    sortBy: 'relevance'
   });
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -27,9 +31,22 @@ export const SearchProvider = ({ children }) => {
     hasPreviousPage: false
   });
 
+  // Função para verificar se devemos mostrar a barra de pesquisa
+  const shouldShowSearch = () => {
+    const currentPath = location.pathname;
+    // Mostrar apenas na página inicial (/)
+    // Esconder nas páginas de detalhes (/movies/:id, /series/:id, /seasons, /episodes, etc.) e favoritos
+    return currentPath === '/';
+  };
+
   const handleSearch = (query) => {
     setSearchQuery(query);
     setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
+    
+    // Se não estiver na página inicial, navegar para ela
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
   };
 
   const handleFilterChange = (filterType, value) => {
@@ -38,6 +55,11 @@ export const SearchProvider = ({ children }) => {
       [filterType]: value
     }));
     setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
+    
+    // Se não estiver na página inicial, navegar para ela
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
   };
 
   const handlePageChange = (page) => {
@@ -65,6 +87,11 @@ export const SearchProvider = ({ children }) => {
   };
 
   const toggleSearch = () => {
+    // Se não estiver na página inicial, navegar para ela primeiro
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
+    
     setIsSearchOpen(!isSearchOpen);
     if (!isSearchOpen) {
       setTimeout(() => {
@@ -81,8 +108,8 @@ export const SearchProvider = ({ children }) => {
     setSearchQuery('');
     setFilters({
       year: '',
-      genre: '',
-      type: ''
+      type: '',
+      sortBy: 'relevance'
     });
     setPagination({
       currentPage: 1,
@@ -101,13 +128,15 @@ export const SearchProvider = ({ children }) => {
         isSearchOpen,
         isFiltersOpen,
         pagination,
+        shouldShowSearch,
         handleSearch,
         handleFilterChange,
         handlePageChange,
         updatePagination,
         toggleSearch,
         toggleFilters,
-        clearSearch
+        clearSearch,
+        setIsSearchOpen
       }}
     >
       {children}
