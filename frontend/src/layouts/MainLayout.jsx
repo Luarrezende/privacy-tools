@@ -29,17 +29,8 @@ const MainLayout = ({ children }) => {
     handleSearch(e.target.value);
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      // A busca será executada automaticamente pela página Home
-      console.log('Busca executada:', searchQuery);
-    }
-  };
-
   const handleHomeClick = () => {
-    // Se estivermos em uma página que não mostra busca, abrir a busca ao voltar para home
     if (!shouldShowSearch()) {
-      // Pequeno delay para garantir que a navegação aconteceu
       setTimeout(() => {
         setIsSearchOpen(true);
       }, 100);
@@ -63,6 +54,7 @@ const MainLayout = ({ children }) => {
         className={styles.sidebar}
         onMouseEnter={handleSidebarMouseEnter}
         onMouseLeave={handleSidebarMouseLeave}
+        aria-label="Menu de navegação principal"
       >
         <div className={styles.profilePicWrapper}>
           <img
@@ -77,6 +69,7 @@ const MainLayout = ({ children }) => {
             to="/" 
             className={`${styles.sidebarButton} ${isActive('/') ? styles.active : ''}`}
             onClick={handleHomeClick}
+            aria-label="Ir para página inicial"
           >
             <i className="fas fa-home"></i>
             <span>Início</span>
@@ -86,6 +79,7 @@ const MainLayout = ({ children }) => {
             className={styles.sidebarButton}
             onClick={toggleSearch}
             style={{ display: shouldShowSearch() ? 'flex' : 'none' }}
+            aria-label="Abrir campo de pesquisa"
           >
             <i className="fas fa-search"></i>
             <span>Pesquisar</span>
@@ -95,15 +89,17 @@ const MainLayout = ({ children }) => {
             className={styles.sidebarButton}
             onClick={toggleFilters}
             style={{ display: shouldShowSearch() ? 'flex' : 'none' }}
+            aria-label="Abrir filtros de pesquisa"
           >
             <i className="fas fa-filter"></i>
             <span>Filtros</span>
           </button>
 
           <Link 
-            to="/favorites" 
-            className={`${styles.sidebarButton} ${isActive('/favorites') ? styles.active : ''}`}
-          >
+              to="/favorites" 
+              className={`${styles.sidebarButton} ${isActive('/favorites') ? styles.active : ''}`}
+              aria-label='Ir para favoritos'
+            >
             <i className="fas fa-heart"></i>
             <span>Favoritos</span>
             {favoritesStats.total > 0 && (
@@ -113,9 +109,7 @@ const MainLayout = ({ children }) => {
         </div>
       </nav>
 
-      {/* Conteúdo Principal */}
       <main className={`${styles.mainContent} ${isSidebarExpanded ? styles.expanded : ''}`}>
-        {/* Campo de Busca - Só aparece nas páginas permitidas */}
         {shouldShowSearch() && (
           <div className={`${styles.searchTop} ${isSearchOpen ? styles.open : ''}`}>
             <i className="fas fa-search"></i>
@@ -125,7 +119,7 @@ const MainLayout = ({ children }) => {
               placeholder="Buscar filmes ou séries..."
               value={searchQuery}
               onChange={handleSearchInput}
-              onKeyPress={handleKeyPress}
+              aria-label="Campo de busca para filmes e séries"
             />
           </div>
         )}
@@ -174,6 +168,7 @@ const MainLayout = ({ children }) => {
               <button 
                 className={styles.clearFiltersBtn}
                 onClick={clearSearch}
+                aria-label="Limpar todos os filtros"
               >
                 <i className="fas fa-times"></i> Limpar Filtros
               </button>

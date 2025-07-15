@@ -1,4 +1,10 @@
+import React from 'react';
 import { vi } from 'vitest';
+
+// Mock contexts
+const SearchContext = React.createContext();
+const FavoritesContext = React.createContext();
+const NotificationContext = React.createContext();
 
 export const mockSearchContext = {
     searchQuery: '',
@@ -23,7 +29,7 @@ export const mockFavoritesContext = {
     removeFromFavorites: vi.fn(),
     isFavorite: vi.fn().mockReturnValue(false),
     clearFavorites: vi.fn(),
-    favoritesCount: 0,
+    getFavoritesStats: vi.fn().mockReturnValue({ total: 0, movies: 0, series: 0 }),
 };
 
 export const mockNotificationContext = {
@@ -35,24 +41,24 @@ export const mockNotificationContext = {
 
 export const MockSearchProvider = ({ children, value = mockSearchContext }) => {
     return (
-        <div data-testid="mock-search-provider">
+        <SearchContext.Provider value={value}>
             {children}
-        </div>
+        </SearchContext.Provider>
     );
 };
 
 export const MockFavoritesProvider = ({ children, value = mockFavoritesContext }) => {
     return (
-        <div data-testid="mock-favorites-provider">
+        <FavoritesContext.Provider value={value}>
             {children}
-        </div>
+        </FavoritesContext.Provider>
     );
 };
 
 export const MockNotificationProvider = ({ children, value = mockNotificationContext }) => {
     return (
-        <div data-testid="mock-notification-provider">
+        <NotificationContext.Provider value={value}>
             {children}
-        </div>
+        </NotificationContext.Provider>
     );
 };
