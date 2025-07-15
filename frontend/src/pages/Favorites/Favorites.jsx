@@ -23,10 +23,6 @@ const Favorites = () => {
     console.log('Assistir:', movie);
   };
 
-  const handleAddToList = (movie) => {
-    console.log('Toggle favorito:', movie);
-  };
-
   const handleClearAll = () => {
     if (window.confirm(`Tem certeza que deseja remover todos os ${stats.total} favoritos?`)) {
       clearFavorites();
@@ -94,7 +90,6 @@ const Favorites = () => {
                 key={movie.id}
                 movie={movie}
                 onWatch={handleWatch}
-                onAddToList={handleAddToList}
               />
             ))}
           </div>
