@@ -1,11 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearch } from '../../context/SearchContext';
 import MovieCard from '../../components/ui/MovieCard/MovieCard';
 import Pagination from '../../components/ui/Pagination/Pagination';
 import ActiveFilters from '../../components/ui/ActiveFilters/ActiveFilters';
 import { apiBaseUrlL, apiEndpoints } from '../../constants/api';
 import { applyFilters } from '../../constants/filters';
+import { deduplicateMoviesAndSeries, checkDataIntegrity } from '../../utils/deduplication';
 import styles from './Home.module.css';
+
+// Hook personalizado para debouncing
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const Home = () => {
   const { 
@@ -15,12 +33,20 @@ const Home = () => {
     handlePageChange, 
     updatePagination, 
     handleFilterChange, 
-    clearSearch 
+    clearSearch,
+    clearFilters 
   } = useSearch();
+  
   const [allResults, setAllResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Debounce para o search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  
+  // Ref para cancelar requisições anteriores
+  const abortControllerRef = useRef(null);
 
   const searchContent = async (query, page = 1) => {
     if (!query.trim()) {
@@ -29,13 +55,22 @@ const Home = () => {
       return;
     }
 
+    // Cancelar requisição anterior se existir
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Criar novo controller para esta requisição
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     setLoading(true);
     setError(null);
 
     try {
       const [moviesResponse, seriesResponse] = await Promise.all([
-        fetch(`${apiBaseUrlL}${apiEndpoints.movies.searchAll}?title=${encodeURIComponent(query)}&page=${page}`),
-        fetch(`${apiBaseUrlL}${apiEndpoints.SERIES.searchAll}?title=${encodeURIComponent(query)}&page=${page}`)
+        fetch(`${apiBaseUrlL}${apiEndpoints.movies.searchAll}?title=${encodeURIComponent(query)}&page=${page}`, { signal }),
+        fetch(`${apiBaseUrlL}${apiEndpoints.SERIES.searchAll}?title=${encodeURIComponent(query)}&page=${page}`, { signal })
       ]);
 
       let moviesData = [];
@@ -75,26 +110,25 @@ const Home = () => {
         }
       }
 
-      const allResults = [
-        ...moviesData,
-        ...seriesData
-      ];
+      // Usar a função de deduplicação robusta
+      const deduplicatedResults = deduplicateMoviesAndSeries(moviesData, seriesData, {
+        addTypeField: true,
+        movieType: 'movie',
+        seriesType: 'tv',
+        debug: true
+      });
 
       console.log('Movies found:', moviesData.length);
       console.log('Series found:', seriesData.length);
-      console.log('Sample movie data:', moviesData[0]);
-      console.log('Sample series data:', seriesData[0]);
-      console.log('Combined results length:', allResults.length);
-      console.log('Combined results sample:', allResults[0]);
+      console.log('Combined results length after deduplication:', deduplicatedResults.length);
       
-      setAllResults(allResults);
-      
-      const filtered = applyFilters(allResults, filters);
-      console.log('Filtered results length:', filtered.length);
-      console.log('Filtered results sample:', filtered[0]);
-      setFilteredResults(filtered);
+      setAllResults(deduplicatedResults);
       updatePagination(moviesJson, seriesJson);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('Requisição cancelada');
+        return;
+      }
       setError('Erro ao buscar conteúdo');
       console.error('Erro na busca:', err);
     } finally {
@@ -103,8 +137,8 @@ const Home = () => {
   };
 
   useEffect(() => {
-    searchContent(searchQuery, pagination.currentPage);
-  }, [searchQuery, pagination.currentPage]);
+    searchContent(debouncedSearchQuery, pagination.currentPage);
+  }, [debouncedSearchQuery, pagination.currentPage]);
 
   useEffect(() => {
     if (allResults.length > 0) {
@@ -112,6 +146,15 @@ const Home = () => {
       setFilteredResults(filtered);
     }
   }, [filters, allResults]);
+
+  // Cleanup: cancelar requisições pendentes quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleRemoveFilter = (filterKey) => {
     if (filterKey === 'sortBy') {
@@ -126,7 +169,7 @@ const Home = () => {
       <ActiveFilters 
         filters={filters}
         onRemoveFilter={handleRemoveFilter}
-        onClearAll={clearSearch}
+        onClearAll={clearFilters}
       />
 
       {loading && (
@@ -152,7 +195,7 @@ const Home = () => {
           <div className={styles.grid}>
             {filteredResults.map((item, index) => (
               <MovieCard
-                key={`${item.type}-${item.id || index}`}
+                key={`${item.type}-${item.id || `${item.title}-${item.year}-${index}`}`}
                 movie={{
                   id: item.id,
                   title: item.title,

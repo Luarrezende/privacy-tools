@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { isMovieType, isTVType } from '../utils/contentTypes';
 
 const FavoritesContext = createContext();
 
@@ -95,8 +96,8 @@ export const FavoritesProvider = ({ children }) => {
   };
 
   const getFavoritesStats = () => {
-    const movies = favorites.filter(fav => fav.type === 'movie');
-    const series = favorites.filter(fav => fav.type === 'series');
+    const movies = favorites.filter(fav => isMovieType(fav.type));
+    const series = favorites.filter(fav => isTVType(fav.type));
     
     return {
       total: favorites.length,

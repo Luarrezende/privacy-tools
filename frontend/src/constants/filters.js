@@ -1,3 +1,5 @@
+import { normalizeContentType, isTVType, isMovieType } from '../utils/contentTypes';
+
 export const filterOptions = {
   types: [
     { value: '', label: 'Todos os Tipos' },
@@ -37,10 +39,16 @@ export const applyFilters = (items, filters) => {
   let filteredItems = [...items];
 
   if (filters.type) {
-    const filterType = filters.type === 'filme' ? 'movie' : 'series';
     filteredItems = filteredItems.filter(item => {
       const itemType = item.type || item.Type;
-      return itemType?.toLowerCase() === filterType;
+      
+      if (filters.type === 'filme') {
+        return isMovieType(itemType);
+      } else if (filters.type === 'serie') {
+        return isTVType(itemType);
+      }
+      
+      return true;
     });
   }
 

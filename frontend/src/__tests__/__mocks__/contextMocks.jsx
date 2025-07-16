@@ -20,6 +20,7 @@ export const mockSearchContext = {
     totalPages: 1,
     setTotalPages: vi.fn(),
     clearSearch: vi.fn(),
+    clearFilters: vi.fn(),
     performSearch: vi.fn(),
 };
 

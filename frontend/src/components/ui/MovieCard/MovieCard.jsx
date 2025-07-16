@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFavorites } from '../../../context/FavoritesContext';
+import { isTVType, isMovieType, getContentTypeLabel, getContentTypeIcon } from '../../../utils/contentTypes';
 import styles from './MovieCard.module.css';
 
 const MovieCard = ({ 
@@ -27,9 +28,9 @@ const MovieCard = ({
   };
 
   const handleCardClick = () => {
-    if (type === 'movie') {
+    if (isMovieType(type)) {
       navigate(`/movies/${movie.id}`);
-    } else if (type === 'series') {
+    } else if (isTVType(type)) {
       navigate(`/series/${movie.id}`);
     }
   };
@@ -53,8 +54,8 @@ const MovieCard = ({
 
         <div className={styles.badges}>
           <div className={styles.badge}>
-            <i className="fas fa-film"></i>
-            <span>{type === 'movie' ? 'Filme' : type === 'series' ? 'Série' : 'Conteúdo'}</span>
+            <i className={getContentTypeIcon(type)}></i>
+            <span>{getContentTypeLabel(type)}</span>
           </div>
         </div>
 

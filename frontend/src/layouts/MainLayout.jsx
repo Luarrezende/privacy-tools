@@ -20,6 +20,7 @@ const MainLayout = ({ children }) => {
     toggleSearch,
     toggleFilters,
     clearSearch,
+    clearFilters,
     setIsSearchOpen
   } = useSearch();
 
@@ -167,7 +168,7 @@ const MainLayout = ({ children }) => {
             <div className={styles.filterActions}>
               <button 
                 className={styles.clearFiltersBtn}
-                onClick={clearSearch}
+                onClick={clearFilters}
                 aria-label="Limpar todos os filtros"
               >
                 <i className="fas fa-times"></i> Limpar Filtros

@@ -120,6 +120,18 @@ export const SearchProvider = ({ children }) => {
     });
   };
 
+  const clearFilters = () => {
+    setFilters({
+      year: '',
+      type: '',
+      sortBy: 'relevance'
+    });
+    setPagination(prev => ({
+      ...prev,
+      currentPage: 1
+    }));
+  };
+
   return (
     <SearchContext.Provider
       value={{
@@ -136,6 +148,7 @@ export const SearchProvider = ({ children }) => {
         toggleSearch,
         toggleFilters,
         clearSearch,
+        clearFilters,
         setIsSearchOpen
       }}
     >
