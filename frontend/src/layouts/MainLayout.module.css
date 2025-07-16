@@ -1,0 +1,371 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+:root {
+  --primary: #8b5cf6;
+  --primary-dark: #7c3aed;
+  --secondary: #0ea5e9;
+  --dark: #0f172a;
+  --darker: #0b1120;
+  --light: #f8fafc;
+  --gray: #94a3b8;
+  --success: #10b981;
+}
+
+/* Layout geral */
+.container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--darker), var(--dark));
+  color: var(--light);
+  overflow-x: hidden;
+  overflow-y: visible;
+  position: relative;
+}
+
+/* Sidebar estilizada */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 5rem;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  z-index: 20;
+}
+
+.sidebar:hover {
+  width: 13.75rem;
+}
+
+.sidebar:hover .sidebarButton span {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Foto perfil */
+.profilePicWrapper {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: linear-gradient(var(--darker), var(--darker)) padding-box,
+    linear-gradient(to right, var(--primary), var(--secondary)) border-box;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.profilePicWrapper:hover {
+  transform: scale(1.05);
+}
+
+.profilePic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Botões sidebar */
+.sidebarButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+  width: 100%;
+  padding: 0 0.75rem;
+}
+
+.sidebarButton {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: visible;
+  text-decoration: none;
+  border: none;
+  background: transparent;
+}
+
+.sidebarButton::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.25rem;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--primary), var(--secondary));
+  transform: translateX(-0.625rem);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.sidebarButton:hover {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--light);
+}
+
+.sidebarButton:hover::before {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.sidebarButton.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--primary);
+}
+
+.sidebarButton.active::before {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.sidebarButton i {
+  font-size: 1.25rem;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.sidebarButton span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(0.625rem);
+  transition: all 0.4s ease;
+}
+
+/* Conteúdo principal */
+.mainContent {
+  flex: 1;
+  margin-left: 5rem;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  transition: margin-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.mainContent.expanded {
+  margin-left: 13.75rem;
+}
+
+.mainContent::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 37.5rem;
+  height: 37.5rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.15) 0%,
+    rgba(15, 23, 42, 0) 70%
+  );
+  z-index: -1;
+}
+
+/* Campo pesquisa */
+.searchTop {
+  max-width: 50rem;
+  margin: 0 auto 1.875rem;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.searchTop.open {
+  height: 3.75rem;
+  opacity: 1;
+}
+
+.searchTop i {
+  font-size: 1.25rem;
+  color: var(--gray);
+  margin-right: 0.75rem;
+}
+
+.searchTop input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--light);
+  font-size: 1rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.3125rem 0;
+}
+
+.searchTop input::placeholder {
+  color: var(--gray);
+}
+
+/* Filtros */
+.filtersContainer {
+  max-width: 60rem;
+  margin: 0 auto 1.875rem;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.filtersContainer.open {
+  opacity: 1;
+  height: auto;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filterField {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--light);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.filterField:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.1875rem rgba(139, 92, 246, 0.3);
+}
+
+.filterField::placeholder {
+  color: var(--gray);
+}
+
+.filterField option {
+  background: var(--dark);
+}
+
+/* Badge de contagem para favoritos */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ff6b6b, #ff2b2b);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50px;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse 2s ease-in-out infinite;
+  z-index: 15;
+  border: 2px solid var(--darker);
+}
+
+/* Ações dos filtros */
+.filterActions {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.clearFiltersBtn {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.clearFiltersBtn:hover {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .sidebar:hover {
+    width: 100%;
+    height: auto;
+  }
+
+  .sidebarButtons {
+    flex-direction: row;
+    margin-top: 0;
+    margin-left: 1.25rem;
+    gap: 0.625rem;
+  }
+
+  .sidebarButton span {
+    display: none;
+  }
+
+  .mainContent {
+    margin-left: 0;
+    margin-top: 5rem;
+    padding: 1.25rem 0.9375rem;
+  }
+
+  .mainContent.expanded {
+    margin-left: 0;
+    margin-top: 5rem;
+  }
+}
