@@ -32,7 +32,7 @@ vi.mock('../../../../utils/contentTypes', () => ({
     getContentTypeIcon: vi.fn((type) => type === 'movie' ? 'fas fa-film' : 'fas fa-tv'),
 }));
 
-describe('MovieCard Component - Linhas Específicas', () => {
+describe('MovieCard Component', () => {
     const mockMovieData = {
         id: 1,
         title: 'Batman',
@@ -64,33 +64,39 @@ describe('MovieCard Component - Linhas Específicas', () => {
         mockIsFavorite.mockReturnValue(false);
     });
 
-    describe('Teste das linhas 20-23: handleWatch', () => {
-        it('deve parar propagação do evento e chamar handleCardClick', () => {
+    describe('Teste do botão Assistir', () => {
+        it('deve navegar para página do filme ao clicar em Assistir', () => {
             renderMovieCard(mockMovieData);
             
             const watchButton = screen.getByText('Assistir');
-            const mockEvent = { stopPropagation: vi.fn() };
-            
             fireEvent.click(watchButton);
             
             expect(mockNavigate).toHaveBeenCalledWith('/movies/1');
         });
+
+        it('deve navegar para página da série ao clicar em Assistir', () => {
+            renderMovieCard(mockSeriesData);
+            
+            const watchButton = screen.getByText('Assistir');
+            fireEvent.click(watchButton);
+            
+            expect(mockNavigate).toHaveBeenCalledWith('/series/2');
+            expect(mockNavigate).toHaveBeenCalledTimes(1);
+        });
     });
 
-    describe('Teste das linhas 26-28: handleAddToList', () => {
-        it('deve parar propagação do evento e chamar toggleFavorite', () => {
+    describe('Teste do botão Lista', () => {
+        it('deve adicionar item à lista de favoritos', () => {
             renderMovieCard(mockMovieData);
             
             const addButton = screen.getByText('Lista');
-            const mockEvent = { stopPropagation: vi.fn() };
-            
             fireEvent.click(addButton);
             
             expect(mockToggleFavorite).toHaveBeenCalledWith(mockMovieData);
         });
     });
 
-    describe('Teste das linhas 31-36: handleCardClick', () => {
+    describe('Teste do clique no card', () => {
         it('deve navegar para página de filme quando type é movie', () => {
             renderMovieCard(mockMovieData);
             
